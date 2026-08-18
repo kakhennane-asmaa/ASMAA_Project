@@ -3,66 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASMAA - Autonomous Spectrum Management</title>
-    <!-- استدعاء مكتبة الخرائط Leaflet -->
+    <title>ASMAA - التنبؤ الذكي بالازدحام</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- استدعاء مكتبة الخرائط الحرارية -->
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; }
-        #map { height: 85vh; width: 100%; }
-        .header { background: #1a2639; color: white; padding: 20px; text-align: center; }
-        .header h1 { margin: 0; font-size: 26px; letter-spacing: 1px; }
-        .header p { margin: 5px 0 0; opacity: 0.8; }
-        .status { position: absolute; bottom: 20px; left: 20px; background: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; font-weight: bold; border-right: 4px solid #1a2639; }
-        @media (max-width: 600px) {
-            .header h1 { font-size: 20px; }
-            .status { font-size: 12px; padding: 8px 12px; }
-        }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; }
+        #map { height: 70vh; width: 100%; }
+        
+        .header { background: #1a2639; color: white; padding: 15px 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+
+        /* لوحة التنبؤات (الجديدة في المرحلة الثانية) */
+        .dashboard { background: white; padding: 15px 20px; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #e9ecef; }
+        .dashboard-box { background: #f1f3f5; padding: 10px 20px; border-radius: 8px; text-align: center; min-width: 140px; flex: 1; }
+        .dashboard-box h3 { margin: 0 0 5px 0; font-size: 14px; color: #495057; }
+        .dashboard-box .value { font-size: 18px; font-weight: bold; color: #1a2639; }
+        .alert { color: #dc3545 !important; }
+        .warning { color: #ffc107 !important; }
+        
+        .status { position: absolute; bottom: 20px; left: 20px; background: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; border-right: 4px solid #1a2639; }
+        @media (max-width: 600px) { .header h1 { font-size: 18px; } .dashboard { padding: 10px; } }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>🌐 ASMAA - محاكاة التنقل والازدحام</h1>
-        <p>المناطق الأكثر احمراراً = ازدحام متوقع في الشبكة (تحديث تلقائي كل 3 ثوانٍ)</p>
+        <h1>🌐 ASMAA - الذكاء الاصطناعي للتنبؤ بالشبكة</h1>
+    </div>
+
+    <!-- لوحة التحكم الذكية -->
+    <div class="dashboard">
+        <div class="dashboard-box">
+            <h3>⚠️ أعلى ولاية خطورة</h3>
+            <div class="value alert" id="alert-city">جاري التحديث...</div>
+        </div>
+        <div class="dashboard-box">
+            <h3>🏙️ متوسط الازدحام</h3>
+            <div class="value" id="avg-load">0%</div>
+        </div>
+        <div class="dashboard-box">
+            <h3>⏳ التنبؤ القادم</h3>
+            <div class="value warning" id="next-prediction">خلال 15 دقيقة</div>
+        </div>
     </div>
 
     <div id="map"></div>
-    <div class="status" id="status">جاري تحميل نظام ASMAA...</div>
+    <div class="status" id="status">نظام ASMAA يعمل...</div>
 
     <script>
-        // 1. تجهيز الخريطة (توسيط الخريطة على الجزائر)
-        var map = L.map('map').setView([33.5, 2.5], 6);
+        var map = L.map('map').setView([34.0, 2.5], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // 2. المدن المراقبة (ولاية البيض موجودة هنا باسمك)
+        // تحديد المدن (البيض موجودة)
         const cities = [
             { "name": "الجزائر", "lat": 36.75, "lon": 3.04, "weight": 1.0 },
             { "name": "وهران", "lat": 35.68, "lon": -0.63, "weight": 0.8 },
             { "name": "قسنطينة", "lat": 36.36, "lon": 6.61, "weight": 0.7 },
             { "name": "البليدة", "lat": 36.47, "lon": 2.82, "weight": 0.6 },
-            { "name": "البيض", "lat": 33.68, "lon": 1.02, "weight": 0.7 } // ✅ ولايتك هنا
+            { "name": "البيض", "lat": 33.68, "lon": 1.02, "weight": 0.7 } 
         ];
 
-        // 3. تشغيل طبقة الحرارة (HeatLayer)
         var heatLayer = L.heatLayer([], { radius: 45, blur: 30, maxZoom: 12 }).addTo(map);
 
-        // 4. دالة المحاكاة الحية (تولد النقاط وتحركها)
         function updateSimulation() {
             let points = [];
+            let cityLoads = [];
             let activePointsCount = 0;
 
             cities.forEach(city => {
-                // معادلة رياضية لمحاكاة أوقات الذروة (شدة الازدحام تتذبذب مع الوقت)
                 let sine_val = Math.sin(Date.now() / 25000 + city.weight);
-                let intensity = Math.max(0.2, (sine_val + 1) / 2) * city.weight;
+                let intensity = Math.max(0.1, (sine_val + 1) / 2) * city.weight;
                 
                 let num_points = Math.floor(intensity * 180) + 20;
                 activePointsCount += num_points;
+
+                // تخزين شدة الازدحام للمدينة لعرضها في لوحة التحكم
+                cityLoads.push({ name: city.name, load: Math.round(intensity * 100) });
 
                 for (let i = 0; i < num_points; i++) {
                     let lat_variation = (Math.random() - 0.5) * 0.06 * intensity;
@@ -71,12 +90,19 @@
                 }
             });
 
-            // تحديث الخريطة
             heatLayer.setLatLngs(points);
+            
+            // تحديث لوحة التحكم الذكية
+            let avgLoad = Math.round(cityLoads.reduce((acc, curr) => acc + curr.load, 0) / cityLoads.length);
+            document.getElementById('avg-load').innerText = avgLoad + '%';
+            
+            // منطق الذكاء الاصطناعي البسيط: اختر المدينة ذات الحمل الأعلى لتحذير المهندسين
+            let maxCity = cityLoads.reduce((max, city) => city.load > max.load ? city : max, cityLoads[0]);
+            document.getElementById('alert-city').innerText = maxCity.name;
+            
             document.getElementById('status').innerHTML = `🔄 نقاط ASMAA النشطة: ${activePointsCount}`;
         }
 
-        // تشغيل التحديث فوراً ثم كل 3 ثوانٍ
         updateSimulation();
         setInterval(updateSimulation, 3000);
     </script>
