@@ -3,106 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASMAA - التنبؤ الذكي بالازدحام</title>
+    <title>ASMAA - التنبؤ بالذكاء الاصطناعي</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <!-- Chart.js للرسم البياني -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; }
-        #map { height: 70vh; width: 100%; }
-        
-        .header { background: #1a2639; color: white; padding: 15px 20px; text-align: center; }
-        .header h1 { margin: 0; font-size: 24px; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #f8f9fa; }
+        #map { height: 55vh; width: 100%; }
+        .header { background: #1a2639; color: white; padding: 15px; text-align: center; }
+        .header h1 { margin: 0; font-size: 22px; }
 
-        /* لوحة التنبؤات (الجديدة في المرحلة الثانية) */
-        .dashboard { background: white; padding: 15px 20px; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #e9ecef; }
-        .dashboard-box { background: #f1f3f5; padding: 10px 20px; border-radius: 8px; text-align: center; min-width: 140px; flex: 1; }
-        .dashboard-box h3 { margin: 0 0 5px 0; font-size: 14px; color: #495057; }
-        .dashboard-box .value { font-size: 18px; font-weight: bold; color: #1a2639; }
+        .dashboard { background: white; padding: 15px; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #e9ecef; }
+        .dash-box { background: #f1f3f5; padding: 10px 15px; border-radius: 8px; text-align: center; flex: 1; min-width: 120px; }
+        .dash-box .val { font-size: 18px; font-weight: bold; color: #1a2639; }
         .alert { color: #dc3545 !important; }
-        .warning { color: #ffc107 !important; }
         
-        .status { position: absolute; bottom: 20px; left: 20px; background: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; border-right: 4px solid #1a2639; }
-        @media (max-width: 600px) { .header h1 { font-size: 18px; } .dashboard { padding: 10px; } }
+        /* قسم الرسم البياني الجديد */
+        .chart-container { background: white; padding: 15px; margin-top: 5px; border-top: 1px solid #eee; }
+        .chart-container h3 { text-align: center; margin: 0 0 10px 0; color: #555; font-size: 16px; }
+        #predictionChart { height: 120px !important; width: 100% !important; }
+        
+        .status { position: absolute; bottom: 20px; left: 20px; background: white; padding: 8px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; border-right: 4px solid #1a2639; font-size: 12px; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <h1>🌐 ASMAA - الذكاء الاصطناعي للتنبؤ بالشبكة</h1>
-    </div>
-
-    <!-- لوحة التحكم الذكية -->
+    <div class="header"><h1>🌐 ASMAA - التنبؤ بحركة الشبكة الذكي</h1></div>
+    
     <div class="dashboard">
-        <div class="dashboard-box">
-            <h3>⚠️ أعلى ولاية خطورة</h3>
-            <div class="value alert" id="alert-city">جاري التحديث...</div>
-        </div>
-        <div class="dashboard-box">
-            <h3>🏙️ متوسط الازدحام</h3>
-            <div class="value" id="avg-load">0%</div>
-        </div>
-        <div class="dashboard-box">
-            <h3>⏳ التنبؤ القادم</h3>
-            <div class="value warning" id="next-prediction">خلال 15 دقيقة</div>
-        </div>
+        <div class="dash-box"><h3>⚠️ أعلى ولاية خطورة</h3><div class="val alert" id="alert-city">جاري...</div></div>
+        <div class="dash-box"><h3>🏙️ متوسط الازدحام الحالي</h3><div class="val" id="avg-load">0%</div></div>
+        <div class="dash-box"><h3>⏳ اتجاه التنبؤ (15 د)</h3><div class="val" id="trend-direction" style="color: #ffc107;">مستقر</div></div>
     </div>
 
     <div id="map"></div>
-    <div class="status" id="status">نظام ASMAA يعمل...</div>
+
+    <!-- حاوية الرسم البياني الجديد -->
+    <div class="chart-container">
+        <h3>📉 منحنيات توقع الازدحام (AI Prediction Trend)</h3>
+        <canvas id="predictionChart"></canvas>
+    </div>
+
+    <div class="status" id="status">يعمل...</div>
 
     <script>
         var map = L.map('map').setView([34.0, 2.5], 6);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        // تحديد المدن (البيض موجودة)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
         const cities = [
             { "name": "الجزائر", "lat": 36.75, "lon": 3.04, "weight": 1.0 },
             { "name": "وهران", "lat": 35.68, "lon": -0.63, "weight": 0.8 },
             { "name": "قسنطينة", "lat": 36.36, "lon": 6.61, "weight": 0.7 },
-            { "name": "البليدة", "lat": 36.47, "lon": 2.82, "weight": 0.6 },
-            { "name": "البيض", "lat": 33.68, "lon": 1.02, "weight": 0.7 } 
+            { "name": "البيض", "lat": 33.68, "lon": 1.02, "weight": 0.7 }
         ];
-
         var heatLayer = L.heatLayer([], { radius: 45, blur: 30, maxZoom: 12 }).addTo(map);
 
-        function updateSimulation() {
-            let points = [];
-            let cityLoads = [];
-            let activePointsCount = 0;
+        // إعداد الرسم البياني
+        const ctx = document.getElementById('predictionChart').getContext('2d');
+        let historyLoad = [50, 55, 60, 65, 58, 62]; // بيانات سابقة وهمية لبدء الرسم
+        const predictionChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['-15د', '-12د', '-9د', '-6د', '-3د', 'الآن', '+3د', '+6د', '+9د', '+12د', '+15د'],
+                datasets: [{
+                    label: 'مستوى الازدحام المتوقع (%)',
+                    data: [...historyLoad, 0, 0, 0, 0, 0],
+                    borderColor: '#1a2639',
+                    backgroundColor: 'rgba(26, 38, 57, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
+        });
 
+        function updateSimulation() {
+            let points = []; let cityLoads = []; let activePoints = 0;
             cities.forEach(city => {
                 let sine_val = Math.sin(Date.now() / 25000 + city.weight);
                 let intensity = Math.max(0.1, (sine_val + 1) / 2) * city.weight;
-                
                 let num_points = Math.floor(intensity * 180) + 20;
-                activePointsCount += num_points;
-
-                // تخزين شدة الازدحام للمدينة لعرضها في لوحة التحكم
+                activePoints += num_points;
                 cityLoads.push({ name: city.name, load: Math.round(intensity * 100) });
-
                 for (let i = 0; i < num_points; i++) {
-                    let lat_variation = (Math.random() - 0.5) * 0.06 * intensity;
-                    let lon_variation = (Math.random() - 0.5) * 0.06 * intensity;
-                    points.push([city.lat + lat_variation, city.lon + lon_variation, intensity]);
+                    points.push([city.lat + (Math.random()-0.5)*0.06*intensity, city.lon + (Math.random()-0.5)*0.06*intensity, intensity]);
                 }
             });
-
             heatLayer.setLatLngs(points);
             
-            // تحديث لوحة التحكم الذكية
-            let avgLoad = Math.round(cityLoads.reduce((acc, curr) => acc + curr.load, 0) / cityLoads.length);
+            let avgLoad = Math.round(cityLoads.reduce((a, c) => a + c.load, 0) / cityLoads.length);
+            let maxCity = cityLoads.reduce((max, c) => c.load > max.load ? c : max, cityLoads[0]);
+            
             document.getElementById('avg-load').innerText = avgLoad + '%';
-            
-            // منطق الذكاء الاصطناعي البسيط: اختر المدينة ذات الحمل الأعلى لتحذير المهندسين
-            let maxCity = cityLoads.reduce((max, city) => city.load > max.load ? city : max, cityLoads[0]);
             document.getElementById('alert-city').innerText = maxCity.name;
-            
-            document.getElementById('status').innerHTML = `🔄 نقاط ASMAA النشطة: ${activePointsCount}`;
-        }
+            document.getElementById('status').innerHTML = `نقاط ASMAA النشطة: ${activePoints}`;
 
+            // تحديث الرسم البياني (AI التنبؤي باستخدام معدل الانحدار البسيط)
+            historyLoad.push(avgLoad);
+            if(historyLoad.length > 6) historyLoad.shift(); // نحافظ على آخر 6 قراءات فقط للمحاكاة
+            
+            let newData = [...historyLoad];
+            // معادلة رياضية للتنبؤ بالدقيقة 15 القادمة: (الانحدار الخطي المبسط)
+            let slope = (historyLoad[historyLoad.length-1] - historyLoad[0]) / 5;
+            for(let i=1; i<=5; i++) {
+                newData.push(Math.min(100, Math.max(0, Math.round(historyLoad[historyLoad.length-1] + (slope * i)))));
+            }
+            predictionChart.data.datasets[0].data = newData;
+            
+            // تحديد اتجاه التنبؤ
+            let trend = newData[newData.length-1] - newData[newData.length-6];
+            let trendEl = document.getElementById('trend-direction');
+            if(trend > 5) { trendEl.innerText = '🚨 ازدحام صاعد'; trendEl.style.color = '#dc3545'; }
+            else if(trend < -5) { trendEl.innerText = '✅ ازدحام منخفض'; trendEl.style.color = '#198754'; }
+            else { trendEl.innerText = '⏸️ مستقر'; trendEl.style.color = '#ffc107'; }
+            
+            predictionChart.update();
+        }
         updateSimulation();
         setInterval(updateSimulation, 3000);
     </script>
