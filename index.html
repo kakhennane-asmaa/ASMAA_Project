@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASMAA - Autonomous Spectrum Management</title>
+    <!-- استدعاء مكتبة الخرائط Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- استدعاء مكتبة الخرائط الحرارية -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; }
+        #map { height: 85vh; width: 100%; }
+        .header { background: #1a2639; color: white; padding: 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 26px; letter-spacing: 1px; }
+        .header p { margin: 5px 0 0; opacity: 0.8; }
+        .status { position: absolute; bottom: 20px; left: 20px; background: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; font-weight: bold; border-right: 4px solid #1a2639; }
+        @media (max-width: 600px) {
+            .header h1 { font-size: 20px; }
+            .status { font-size: 12px; padding: 8px 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🌐 ASMAA - محاكاة التنقل والازدحام</h1>
+        <p>المناطق الأكثر احمراراً = ازدحام متوقع في الشبكة (تحديث تلقائي كل 3 ثوانٍ)</p>
+    </div>
+
+    <div id="map"></div>
+    <div class="status" id="status">جاري تحميل نظام ASMAA...</div>
+
+    <script>
+        // 1. تجهيز الخريطة (توسيط الخريطة على الجزائر)
+        var map = L.map('map').setView([33.5, 2.5], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 2. المدن المراقبة (ولاية البيض موجودة هنا باسمك)
+        const cities = [
+            { "name": "الجزائر", "lat": 36.75, "lon": 3.04, "weight": 1.0 },
+            { "name": "وهران", "lat": 35.68, "lon": -0.63, "weight": 0.8 },
+            { "name": "قسنطينة", "lat": 36.36, "lon": 6.61, "weight": 0.7 },
+            { "name": "البليدة", "lat": 36.47, "lon": 2.82, "weight": 0.6 },
+            { "name": "البيض", "lat": 33.68, "lon": 1.02, "weight": 0.7 } // ✅ ولايتك هنا
+        ];
+
+        // 3. تشغيل طبقة الحرارة (HeatLayer)
+        var heatLayer = L.heatLayer([], { radius: 45, blur: 30, maxZoom: 12 }).addTo(map);
+
+        // 4. دالة المحاكاة الحية (تولد النقاط وتحركها)
+        function updateSimulation() {
+            let points = [];
+            let activePointsCount = 0;
+
+            cities.forEach(city => {
+                // معادلة رياضية لمحاكاة أوقات الذروة (شدة الازدحام تتذبذب مع الوقت)
+                let sine_val = Math.sin(Date.now() / 25000 + city.weight);
+                let intensity = Math.max(0.2, (sine_val + 1) / 2) * city.weight;
+                
+                let num_points = Math.floor(intensity * 180) + 20;
+                activePointsCount += num_points;
+
+                for (let i = 0; i < num_points; i++) {
+                    let lat_variation = (Math.random() - 0.5) * 0.06 * intensity;
+                    let lon_variation = (Math.random() - 0.5) * 0.06 * intensity;
+                    points.push([city.lat + lat_variation, city.lon + lon_variation, intensity]);
+                }
+            });
+
+            // تحديث الخريطة
+            heatLayer.setLatLngs(points);
+            document.getElementById('status').innerHTML = `🔄 نقاط ASMAA النشطة: ${activePointsCount}`;
+        }
+
+        // تشغيل التحديث فوراً ثم كل 3 ثوانٍ
+        updateSimulation();
+        setInterval(updateSimulation, 3000);
+    </script>
+</body>
+</html>
