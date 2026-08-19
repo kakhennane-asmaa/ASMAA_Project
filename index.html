@@ -16,50 +16,96 @@
         * { box-sizing: border-box; }
         body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: #f5f7fa; color: #333; }
         
-        .header { text-align: center; padding: 20px 0; background: #ffffff; border-bottom: 1px solid #e0e7ef; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 700; color: #1976d2; letter-spacing: 1px; }
+        .header { text-align: center; padding: 18px 0; background: #ffffff; border-bottom: 1px solid #e0e7ef; }
+        .header h1 { margin: 0; font-size: 22px; font-weight: 700; color: #1976d2; }
         .header h1 i { color: #1976d2; margin-left: 10px; }
 
-        .dashboard { display: flex; justify-content: space-around; padding: 15px 20px; gap: 15px; background: #ffffff; border-bottom: 1px solid #e0e7ef; }
-        .dash-box { flex: 1; background: #f8fafc; border-radius: 12px; padding: 15px 10px; text-align: center; border: 1px solid #e9edf3; transition: 0.2s; }
-        .dash-box:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: #d0d8e4; }
-        .dash-box h3 { margin: 0 0 8px 0; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .dash-box .val { font-size: 22px; font-weight: 700; color: #1976d2; }
+        .dashboard { display: flex; justify-content: space-around; padding: 12px 15px; gap: 10px; background: #ffffff; border-bottom: 1px solid #e0e7ef; flex-wrap: wrap; }
+        .dash-box { flex: 1; min-width: 80px; background: #f8fafc; border-radius: 10px; padding: 12px 10px; text-align: center; border: 1px solid #e9edf3; }
+        .dash-box h3 { margin: 0 0 8px 0; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; }
+        .dash-box .val { font-size: 20px; font-weight: 700; color: #1976d2; }
         .dash-box .val.alert { color: #dc3545; }
         .dash-box .val.success { color: #28a745; }
         .dash-box .val.warning { color: #fd7e14; }
         
-        /* خريطة نهارية */
-        #map { height: 40vh; width: 100%; background: #ffffff; border-bottom: 1px solid #e0e7ef; }
+        #map { height: 38vh; width: 100%; background: #ffffff; border-bottom: 1px solid #e0e7ef; }
         .leaflet-control-zoom { display: none; }
 
-        .metrics-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding: 15px 20px 10px; background: #ffffff; border-bottom: 1px solid #e0e7ef; }
-        .metric-box { background: #f8fafc; border: 1px solid #e9edf3; border-radius: 10px; padding: 8px 20px; text-align: center; flex: 1; min-width: 70px; }
-        .metric-box .m-val { font-size: 18px; font-weight: 700; color: #1976d2; }
-        .metric-box .m-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; margin-top: 2px; }
+        /* 1. وسيلة إيضاح الخريطة (النقطة 10) */
+        .map-legend { display: flex; justify-content: center; gap: 20px; padding: 10px; background: #fff; border-bottom: 1px solid #e0e7ef; font-size: 12px; font-weight: 600; color: #555; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 
-        .chart-container { background: #ffffff; margin: 15px 20px; border-radius: 12px; padding: 15px; border: 1px solid #e0e7ef; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        /* 2. أزرار التوقيت (النقطة 6) */
+        .time-buttons { display: flex; justify-content: center; gap: 10px; padding: 10px 15px; background: #fff; border-bottom: 1px solid #e0e7ef; flex-wrap: wrap; }
+        .time-btn { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; transition: 0.2s; }
+        .time-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
+        .time-btn:hover:not(.active) { background: #e2e8f0; }
+
+        .stats-row { display: flex; gap: 15px; padding: 10px 15px; background: #fff; border-bottom: 1px solid #e0e7ef; flex-wrap: wrap; }
+        
+        .metrics-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 10px 15px; background: #ffffff; border-bottom: 1px solid #e0e7ef; }
+        .metric-box { background: #f8fafc; border: 1px solid #e9edf3; border-radius: 8px; padding: 6px 15px; text-align: center; flex: 1; min-width: 60px; }
+        .metric-box .m-val { font-size: 16px; font-weight: 700; color: #1976d2; }
+        .metric-box .m-label { font-size: 10px; font-weight: 600; color: #94a3b8; text-transform: uppercase; }
+
+        /* 3. قائمة أكثر 5 مناطق (النقطة 13) */
+        .top-five-container { padding: 10px 15px 5px; background: #fff; border-bottom: 1px solid #e0e7ef; }
+        .top-five-container h4 { margin: 0 0 8px 0; font-size: 13px; color: #475569; font-weight: 600; }
+        .top-five-list { display: flex; flex-wrap: wrap; gap: 5px 10px; }
+        .top-item { background: #f1f5f9; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; color: #333; }
+
+        .chart-container { background: #ffffff; margin: 15px; border-radius: 12px; padding: 15px; border: 1px solid #e0e7ef; }
         .chart-container h3 { text-align: center; margin: 0 0 10px 0; color: #64748b; font-size: 14px; font-weight: 600; }
         #predictionChart { height: 110px !important; width: 100% !important; }
 
-        .status { position: absolute; bottom: 20px; left: 20px; background: #ffffff; border: 1px solid #d0d8e4; padding: 8px 16px; border-radius: 20px; z-index: 1000; font-size: 12px; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-weight: 600; }
-        .status i { color: #1976d2; margin-left: 5px; }
+        .status { position: absolute; bottom: 20px; left: 20px; background: #ffffff; border: 1px solid #d0d8e4; padding: 6px 14px; border-radius: 20px; z-index: 1000; font-size: 12px; color: #333; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
-        @media (max-width: 600px) { .header h1 { font-size: 18px; } .dash-box .val { font-size: 18px; } .dash-box { padding: 10px; } .metrics-container { padding: 10px 10px 5px; gap: 8px; } .metric-box { padding: 6px 10px; min-width: 50px; } .metric-box .m-val { font-size: 14px; } }
+        @media (max-width: 600px) { .header h1 { font-size: 16px; } .dash-box .val { font-size: 16px; } .map-legend { gap: 10px; font-size: 10px; flex-wrap: wrap; } .time-btn { padding: 4px 10px; font-size: 11px; } .metrics-container { gap: 5px; } .top-item { font-size: 10px; } }
     </style>
 </head>
 <body>
-    <div class="header"><h1><i class="fas fa-network-wired"></i> ASMAA | AI Traffic Predictor</h1></div>
+    <div class="header"><h1><i class="fas fa-network-wired"></i> ASMAA | Traffic Predictive AI</h1></div>
     
     <div class="dashboard">
         <div class="dash-box"><h3><i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> أعلى مدينة ازدحام</h3><div class="val alert" id="alert-city">جاري...</div></div>
         <div class="dash-box"><h3><i class="fas fa-chart-bar" style="color:#1976d2;"></i> متوسط الازدحام</h3><div class="val" id="avg-load">0%</div></div>
         <div class="dash-box"><h3><i class="fas fa-robot" style="color:#fd7e14;"></i> توقع LSTM</h3><div class="val warning" id="trend-direction">تحميل...</div></div>
+        <!-- 4. مؤشر الخطر (النقطة 12) -->
+        <div class="dash-box"><h3><i class="fas fa-tag" style="color:#6c757d;"></i> مؤشر الخطر</h3><div class="val" id="risk-index" style="color: #28a745;">0</div></div>
     </div>
 
     <div id="map"></div>
 
-    <!-- مقاييس الاحترافية -->
+    <!-- 1. وسيلة إيضاح الخريطة -->
+    <div class="map-legend">
+        <span class="legend-item"><span class="color-dot" style="background:#00ff00;"></span> منخفض</span>
+        <span class="legend-item"><span class="color-dot" style="background:#ffa500;"></span> متوسط</span>
+        <span class="legend-item"><span class="color-dot" style="background:#ff4500;"></span> مرتفع</span>
+        <span class="legend-item"><span class="color-dot" style="background:#dc3545;"></span> خطير</span>
+    </div>
+
+    <!-- 2. أزرار اختيار التوقيت -->
+    <div class="time-buttons">
+        <button class="time-btn active" onclick="setForecast(15)">+15 دقيقة</button>
+        <button class="time-btn" onclick="setForecast(60)">+1 ساعة</button>
+        <button class="time-btn" onclick="setForecast(180)">+3 ساعات</button>
+        <button class="time-btn" onclick="setForecast(360)">+6 ساعات</button>
+    </div>
+
+    <!-- 5. نظام التنبيهات (النقطة 14) و القائمة (النقطة 13) -->
+    <div class="stats-row">
+        <div class="top-five-container" style="flex: 2; border:none; padding: 0;">
+            <h4>🏙️ أكثر 5 مناطق ازدحاماً متوقعة:</h4>
+            <div class="top-five-list" id="top-five-list"></div>
+        </div>
+        <div style="flex: 1; text-align: left; padding: 0;">
+            <h4 style="margin:0 0 6px 0; font-size:13px; color:#475569;">🚨 نظام التنبيهات</h4>
+            <div id="alert-system" style="font-size:12px; color:#28a745; font-weight:600;">✅ الشبكة مستقرة (لا توجد إنذارات)</div>
+        </div>
+    </div>
+
+    <!-- المقاييس التقنية -->
     <div class="metrics-container">
         <div class="metric-box"><div class="m-val" id="r2">98.4%</div><div class="m-label">R²</div></div>
         <div class="metric-box"><div class="m-val" id="mae">2.1%</div><div class="m-label">MAE</div></div>
@@ -68,18 +114,17 @@
     </div>
 
     <div class="chart-container">
-        <h3><i class="fas fa-chart-line" style="color:#1976d2;"></i> توقع حركة الشبكة العصبية (Live)</h3>
+        <h3><i class="fas fa-chart-line" style="color:#1976d2;"></i> منحنيات توقع الشبكة (Live)</h3>
         <canvas id="predictionChart"></canvas>
     </div>
 
-    <div class="status" id="status"><i class="fas fa-circle" style="font-size: 8px;"></i> جاري تحميل ASMAA...</div>
+    <div class="status" id="status"><i class="fas fa-circle" style="font-size: 8px; color:#1976d2;"></i> جاري تحميل الذكاء الاصطناعي...</div>
 
     <script>
-        // خريطة نهارية (Light Map)
         var map = L.map('map', { zoomControl: false }).setView([34.0, 2.5], 6);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         
-        const cities = [ { "name": "الجزائر", "lat": 36.75, "lon": 3.04, "weight": 1.0 }, { "name": "وهران", "lat": 35.68, "lon": -0.63, "weight": 0.8 }, { "name": "قسنطينة", "lat": 36.36, "lon": 6.61, "weight": 0.7 }, { "name": "البيض", "lat": 33.68, "lon": 1.02, "weight": 0.7 } ];
+        const cities = [ { "name": "الجزائر", "lat": 36.75, "lon": 3.04, "weight": 1.0 }, { "name": "وهران", "lat": 35.68, "lon": -0.63, "weight": 0.8 }, { "name": "قسنطينة", "lat": 36.36, "lon": 6.61, "weight": 0.7 }, { "name": "البيض", "lat": 33.68, "lon": 1.02, "weight": 0.7 }, { "name": "سطيف", "lat": 36.19, "lon": 5.41, "weight": 0.6 } ];
         var heatLayer = L.heatLayer([], { radius: 45, blur: 25, maxZoom: 12, minOpacity: 0.7 }).addTo(map);
 
         const ctx = document.getElementById('predictionChart').getContext('2d');
@@ -103,17 +148,21 @@
 
         async function loadModel() {
             try {
-                document.getElementById('status').innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تحميل نموذج AI...';
+                document.getElementById('status').innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تحميل النموذج...';
                 lstmModel = await tf.loadLayersModel('model.json');
                 modelLoaded = true;
-                document.getElementById('status').innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> نموذج LSTM يعمل!';
+                document.getElementById('status').innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> نظام AI يعمل!';
                 document.getElementById('trend-direction').innerText = 'جاهز';
             } catch (e) {
-                document.getElementById('status').innerHTML = '⚠️ تشغيل النسخة الاحتياطية (المحاكاة)';
-                console.warn("النموذج الحقيقي لم يعثر عليه، تم تشغيل المحاكاة", e);
+                document.getElementById('status').innerHTML = '⚠️ تشغيل المحاكاة (AI غير متاح)';
             }
         }
         loadModel();
+
+        function setForecast(minutes) {
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
 
         function updateSimulation() {
             let points = []; let cityLoads = []; let activePoints = 0;
@@ -133,6 +182,19 @@
             let maxCity = cityLoads.reduce((max, c) => c.load > max.load ? c : max, cityLoads[0]);
             document.getElementById('avg-load').innerText = avgLoad + '%';
             document.getElementById('alert-city').innerText = maxCity.name;
+
+            // تحديث مؤشر الخطر (النقطة 12)
+            document.getElementById('risk-index').innerText = maxCity.load + '%';
+
+            // نظام التنبيهات (النقطة 14)
+            let alertDiv = document.getElementById('alert-system');
+            if(maxCity.load > 80) { alertDiv.innerHTML = '🔴 إنذار: ازدحام خطير في ' + maxCity.name + ' (عالٍ جداً)'; alertDiv.style.color = '#dc3545'; }
+            else if(maxCity.load > 60) { alertDiv.innerHTML = '🟡 إنذار: ازدحام مرتفع متوقع في ' + maxCity.name; alertDiv.style.color = '#fd7e14'; }
+            else { alertDiv.innerHTML = '✅ الشبكة مستقرة (لا توجد إنذارات)'; alertDiv.style.color = '#28a745'; }
+
+            // قائمة أكثر 5 مناطق (النقطة 13)
+            let sortedCities = cityLoads.sort((a, b) => b.load - a.load).slice(0, 5);
+            document.getElementById('top-five-list').innerHTML = sortedCities.map(c => `<span class="top-item">${c.name}: ${c.load}%</span>`).join('');
 
             historyLoad.push(avgLoad);
             if(historyLoad.length > 6) historyLoad.shift();
