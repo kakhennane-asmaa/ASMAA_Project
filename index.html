@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASMAA - Professional AI Dashboard</title>
+    <title>ASMAA - Real Time AI Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- نسخة محسنة من TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
 
     <style>
         * { box-sizing: border-box; }
@@ -32,12 +30,10 @@
         #map { height: 38vh; width: 100%; background: #ffffff; border-bottom: 1px solid #e0e7ef; }
         .leaflet-control-zoom { display: none; }
 
-        /* 1. وسيلة إيضاح الخريطة */
         .map-legend { display: flex; justify-content: center; gap: 20px; padding: 10px; background: #fff; border-bottom: 1px solid #e0e7ef; font-size: 12px; font-weight: 600; color: #555; }
         .legend-item { display: flex; align-items: center; gap: 6px; }
         .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 
-        /* 2. أزرار التوقيت */
         .time-buttons { display: flex; justify-content: center; gap: 10px; padding: 10px 15px; background: #fff; border-bottom: 1px solid #e0e7ef; flex-wrap: wrap; }
         .time-btn { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; transition: 0.2s; }
         .time-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
@@ -50,7 +46,6 @@
         .metric-box .m-val { font-size: 16px; font-weight: 700; color: #1976d2; }
         .metric-box .m-label { font-size: 10px; font-weight: 600; color: #94a3b8; text-transform: uppercase; }
 
-        /* 3. قائمة أكثر 5 مناطق */
         .top-five-container { padding: 10px 15px 5px; background: #fff; border-bottom: 1px solid #e0e7ef; }
         .top-five-container h4 { margin: 0 0 8px 0; font-size: 13px; color: #475569; font-weight: 600; }
         .top-five-list { display: flex; flex-wrap: wrap; gap: 5px 10px; }
@@ -61,6 +56,7 @@
         #predictionChart { height: 110px !important; width: 100% !important; }
 
         .status { position: absolute; bottom: 20px; left: 20px; background: #ffffff; border: 1px solid #d0d8e4; padding: 6px 14px; border-radius: 20px; z-index: 1000; font-size: 12px; color: #333; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .status i { color: #28a745; }
 
         @media (max-width: 600px) { .header h1 { font-size: 16px; } .dash-box .val { font-size: 16px; } .map-legend { gap: 10px; font-size: 10px; flex-wrap: wrap; } .time-btn { padding: 4px 10px; font-size: 11px; } .metrics-container { gap: 5px; } .top-item { font-size: 10px; } }
     </style>
@@ -71,14 +67,12 @@
     <div class="dashboard">
         <div class="dash-box"><h3><i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> أعلى مدينة ازدحام</h3><div class="val alert" id="alert-city">جاري...</div></div>
         <div class="dash-box"><h3><i class="fas fa-chart-bar" style="color:#1976d2;"></i> متوسط الازدحام</h3><div class="val" id="avg-load">0%</div></div>
-        <div class="dash-box"><h3><i class="fas fa-robot" style="color:#fd7e14;"></i> توقع LSTM</h3><div class="val warning" id="trend-direction">تحميل...</div></div>
-        <!-- 4. مؤشر الخطر -->
+        <div class="dash-box"><h3><i class="fas fa-microchip" style="color:#fd7e14;"></i> توقع AI</h3><div class="val warning" id="trend-direction">جاري التحميل...</div></div>
         <div class="dash-box"><h3><i class="fas fa-tag" style="color:#6c757d;"></i> مؤشر الخطر</h3><div class="val" id="risk-index" style="color: #28a745;">0</div></div>
     </div>
 
     <div id="map"></div>
 
-    <!-- 1. وسيلة إيضاح الخريطة -->
     <div class="map-legend">
         <span class="legend-item"><span class="color-dot" style="background:#00ff00;"></span> منخفض</span>
         <span class="legend-item"><span class="color-dot" style="background:#ffa500;"></span> متوسط</span>
@@ -86,7 +80,6 @@
         <span class="legend-item"><span class="color-dot" style="background:#dc3545;"></span> خطير</span>
     </div>
 
-    <!-- 2. أزرار اختيار التوقيت -->
     <div class="time-buttons">
         <button class="time-btn active" onclick="setForecast(15)">+15 دقيقة</button>
         <button class="time-btn" onclick="setForecast(60)">+1 ساعة</button>
@@ -94,7 +87,6 @@
         <button class="time-btn" onclick="setForecast(360)">+6 ساعات</button>
     </div>
 
-    <!-- 5. نظام التنبيهات و القائمة -->
     <div class="stats-row">
         <div class="top-five-container" style="flex: 2; border:none; padding: 0;">
             <h4>🏙️ أكثر 5 مناطق ازدحاماً متوقعة:</h4>
@@ -102,11 +94,10 @@
         </div>
         <div style="flex: 1; text-align: left; padding: 0;">
             <h4 style="margin:0 0 6px 0; font-size:13px; color:#475569;">🚨 نظام التنبيهات</h4>
-            <div id="alert-system" style="font-size:12px; color:#28a745; font-weight:600;">✅ الشبكة مستقرة (لا توجد إنذارات)</div>
+            <div id="alert-system" style="font-size:12px; color:#28a745; font-weight:600;">✅ الشبكة مستقرة</div>
         </div>
     </div>
 
-    <!-- المقاييس التقنية -->
     <div class="metrics-container">
         <div class="metric-box"><div class="m-val" id="r2">98.4%</div><div class="m-label">R²</div></div>
         <div class="metric-box"><div class="m-val" id="mae">2.1%</div><div class="m-label">MAE</div></div>
@@ -119,7 +110,7 @@
         <canvas id="predictionChart"></canvas>
     </div>
 
-    <div class="status" id="status"><i class="fas fa-circle" style="font-size: 8px; color:#1976d2;"></i> جاري رفع الذكاء الاصطناعي...</div>
+    <div class="status" id="status"><i class="fas fa-circle" style="font-size: 8px; color:#1976d2;"></i> جاري تحميل الخادم الخلفي...</div>
 
     <script>
         var map = L.map('map', { zoomControl: false }).setView([34.0, 2.5], 6);
@@ -145,35 +136,6 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#64748b' } }, x: { grid: { display: false }, ticks: { color: '#64748b' } } } }
         });
 
-        let lstmModel; let modelLoaded = false;
-
-        // 🧠 خوارزمية البحث الذكي عن النموذج (الجذر و مجلد models)
-        async function loadModel() {
-            try {
-                document.getElementById('status').innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري البحث عن النموذج...';
-                // 1. محاولة التحميل من الجذر
-                lstmModel = await tf.loadLayersModel('model.json');
-                modelLoaded = true;
-                document.getElementById('status').innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> الذكاء الاصطناعي (LSTM) يعمل!';
-                document.getElementById('trend-direction').innerText = 'نشط';
-                return;
-            } catch (e) {
-                console.log("التحميل من الجذر فشل، أحاول مجلد models/");
-                try {
-                    // 2. محاولة التحميل من مجلد models
-                    lstmModel = await tf.loadLayersModel('models/model.json');
-                    modelLoaded = true;
-                    document.getElementById('status').innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> الذكاء الاصطناعي يعمل!';
-                    document.getElementById('trend-direction').innerText = 'نشط';
-                } catch (e2) {
-                    console.log("فشل التحميل من كلا المسارين.");
-                    document.getElementById('status').innerHTML = '⚠️ تشغيل المحاكاة (AI غير متاح حالياً)';
-                    document.getElementById('trend-direction').innerText = 'محاكاة';
-                }
-            }
-        }
-        loadModel();
-
         function setForecast(minutes) {
             document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
@@ -197,48 +159,39 @@
             let maxCity = cityLoads.reduce((max, c) => c.load > max.load ? c : max, cityLoads[0]);
             document.getElementById('avg-load').innerText = avgLoad + '%';
             document.getElementById('alert-city').innerText = maxCity.name;
-
-            // مؤشر الخطر
             document.getElementById('risk-index').innerText = maxCity.load + '%';
 
             // نظام التنبيهات
             let alertDiv = document.getElementById('alert-system');
-            if(maxCity.load > 80) { alertDiv.innerHTML = '🔴 إنذار: ازدحام خطير في ' + maxCity.name + ' (حالاً)'; alertDiv.style.color = '#dc3545'; }
+            if(maxCity.load > 80) { alertDiv.innerHTML = '🔴 إنذار: ازدحام خطير في ' + maxCity.name; alertDiv.style.color = '#dc3545'; }
             else if(maxCity.load > 60) { alertDiv.innerHTML = '🟡 إنذار: ازدحام مرتفع متوقع في ' + maxCity.name; alertDiv.style.color = '#fd7e14'; }
-            else { alertDiv.innerHTML = '✅ الشبكة مستقرة (لا توجد إنذارات)'; alertDiv.style.color = '#28a745'; }
+            else { alertDiv.innerHTML = '✅ الشبكة مستقرة'; alertDiv.style.color = '#28a745'; }
 
             // قائمة أكثر 5 مناطق
             let sortedCities = cityLoads.sort((a, b) => b.load - a.load).slice(0, 5);
             document.getElementById('top-five-list').innerHTML = sortedCities.map(c => `<span class="top-item">${c.name}: ${c.load}%</span>`).join('');
 
+            // تحديث الرسم البياني
             historyLoad.push(avgLoad);
             if(historyLoad.length > 6) historyLoad.shift();
             let newData = [...historyLoad];
-            
-            if (modelLoaded && lstmModel) {
-                try {
-                    const inputTensor = tf.tensor2d([historyLoad], [1, 5, 1]);
-                    const predictionTensor = lstmModel.predict(inputTensor);
-                    let predictedVal = predictionTensor.dataSync()[0];
-                    predictedVal = Math.min(100, Math.max(0, Math.round(predictedVal * 100)));
-                    let tempHist = [...historyLoad];
-                    for(let i=1; i<=5; i++) {
-                        let inp = tf.tensor2d([tempHist.slice(-5)], [1, 5, 1]);
-                        let pred = lstmModel.predict(inp).dataSync()[0];
-                        let val = Math.min(100, Math.max(0, Math.round(pred * 100)));
-                        newData.push(val);
-                        tempHist.push(val);
-                    }
-                    let trend = newData[newData.length-1] - newData[newData.length-6];
-                    let trendEl = document.getElementById('trend-direction');
-                    if(trend > 3) { trendEl.innerHTML = '<i class="fas fa-arrow-up"></i> ازدحام صاعد'; trendEl.style.color = '#dc3545'; }
-                    else if(trend < -3) { trendEl.innerHTML = '<i class="fas fa-arrow-down"></i> ازدحام منخفض'; trendEl.style.color = '#28a745'; }
-                    else { trendEl.innerHTML = '<i class="fas fa-minus"></i> مستقر'; trendEl.style.color = '#fd7e14'; }
-                } catch(e) {}
-            }
-
+            for(let i=1; i<=5; i++) { newData.push(Math.round(historyLoad[historyLoad.length-1] + (i * 1.5))); }
             predictionChart.data.datasets[0].data = newData;
             predictionChart.update();
+
+            // 🧠 الاتصال بخادم الذكاء الاصطناعي الخلفي
+            fetch('/api/predict')
+                .then(response => response.json())
+                .then(data => {
+                    let aiPred = data.prediction;
+                    document.getElementById('trend-direction').innerHTML = `<i class="fas fa-microchip"></i> AI: ${aiPred}%`;
+                    document.getElementById('status').innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> 🧠 الذكاء الاصطناعي الخلفي يعمل! (LSTM)';
+                })
+                .catch(error => {
+                    console.log("الخادم الخلفي لم يستجب، تشغيل المحاكاة.");
+                    document.getElementById('trend-direction').innerText = 'محاكاة (AI)';
+                    document.getElementById('status').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ffa500;"></i> تشغيل المحاكاة الاحتياطية';
+                });
         }
         updateSimulation();
         setInterval(updateSimulation, 4000);
